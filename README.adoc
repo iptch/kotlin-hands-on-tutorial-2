@@ -24,25 +24,16 @@ This tutorial is designed for Java developers who have already had their hands o
 
 == Part 1: Initial setup and introduction to the project
 
-To start working on this tutorial, we'll need one of the latest versions of IntelliJ IDEA – any version from 2018.1 onwards.You can download the latest free community version https://www.jetbrains.com/idea/download[here].
+To start working on this tutorial, we'll need one of the latest versions of IntelliJ IDEA. You can download the latest free community version https://www.jetbrains.com/idea/download[here].
 
-This project is based on Spring Boot 2.4.0, which requires Kotlin 1.4.10. Make sure version 1.4+ of the Kotlin plugin is installed.To update the Kotlin plugin, use `Tools | Kotlin | Configure Kotlin Plugin Updates`.
+This project is based on Spring Boot 3.2.2, which requires Kotlin 1.9.22. Make sure version 1.9.22 of the Kotlin plugin is installed.To update the Kotlin plugin, use `Tools | Kotlin | Configure Kotlin Plugin Updates`.
 
 === Downloading the project
 
-Clone the repository from IntelliJ IDEA by choosing `File | New | Project from Version Control`.
-
-image::{images}/download-from-vcs.png[]
-
-Specify the project path: https://github.com/kotlin-hands-on/kotlin-spring-chat.
-
-image::{images}/download-from-vcs-github.png[]
-
-Once you clone the project, IntelliJ IDEA will import and open it automatically.
-Alternatively, you can clone the project with the command line:
+Clone the project with the command line:
 
 [source,bash]
-$ git clone https://github.com/kotlin-hands-on/kotlin-spring-chat
+$ git clone https://github.com/iptch/kotlin-hands-on-tutorial-2.git
 
 === Solution branches
 
@@ -58,16 +49,6 @@ git branch -a
 It is possible to use the `Compare with branch` command in IntelliJ IDEA to compare your solution with the proposed one.
 
 image::{images}/intellij-git-compare-with-branch.png[]
-
-For instance, here is the list differences between the `initial` branch and `part-2` branch:
-
-image::{images}/intellij-git-compare-with-branch-diff.png[]
-
-By clicking on the individual files, you can see the changes at a line level.
-
-image::{images}/intellij-git-compare-with-branch-file-diff.png[]
-
-This should help you in the event that you have any trouble with the instructions at any stage of the tutorial.
 
 === Launching the application
 The `main` method for the application is located in the `ChatKotlinApplication.kt` file. Simply click on the gutter icon next to the main method or hit the `Alt+Enter` shortcut to invoke the launch menu in IntelliJ IDEA:
