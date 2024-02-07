@@ -295,12 +295,12 @@ Also, you should modify `application.properties` so it contains the following at
 
 [source,properties]
 -----
-spring.datasource.schema=classpath:sql/schema.sql
+spring.sql.init.schema-locations=classpath:sql/schema.sql
 spring.datasource.url=jdbc:h2:file:./build/data/testdb
 spring.datasource.driverClassName=org.h2.Driver
-spring.datasource.username=sa
+spring.datasource.username=name
 spring.datasource.password=password
-spring.datasource.initialization-mode=always
+spring.sql.init.mode=always
 -----
 
 === Working with data
