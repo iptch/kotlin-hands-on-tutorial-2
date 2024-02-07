@@ -20,7 +20,7 @@ import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
-import org.springframework.boot.web.server.LocalServerPort
+import org.springframework.boot.test.web.server.LocalServerPort
 import org.springframework.messaging.rsocket.RSocketRequester
 import org.springframework.messaging.rsocket.dataWithType
 import org.springframework.messaging.rsocket.retrieveFlow
@@ -28,6 +28,7 @@ import java.net.URI
 import java.net.URL
 import java.time.Instant
 import java.time.temporal.ChronoUnit.MILLIS
+import kotlin.time.Duration.Companion.seconds
 import kotlin.time.ExperimentalTime
 import kotlin.time.seconds
 
@@ -99,7 +100,7 @@ class ChatKotlinApplicationTests(
                 .route("api.v1.messages.stream")
                 .retrieveFlow<MessageVM>()
                 .test {
-                    assertThat(expectItem().prepareForTesting())
+                    assertThat(awaitItem())
                         .isEqualTo(
                             MessageVM(
                                 "*testMessage*",
@@ -108,7 +109,7 @@ class ChatKotlinApplicationTests(
                             )
                         )
 
-                    assertThat(expectItem().prepareForTesting())
+                    assertThat(awaitItem())
                         .isEqualTo(
                             MessageVM(
                                 "<body><p><strong>testMessage2</strong></p></body>",
@@ -116,7 +117,7 @@ class ChatKotlinApplicationTests(
                                 now.minusSeconds(1).truncatedTo(MILLIS)
                             )
                         )
-                    assertThat(expectItem().prepareForTesting())
+                    assertThat(awaitItem())
                         .isEqualTo(
                             MessageVM(
                                 "<body><p><code>testMessage3</code></p></body>",
@@ -142,7 +143,7 @@ class ChatKotlinApplicationTests(
                             .collect()
                     }
 
-                    assertThat(expectItem().prepareForTesting())
+                    assertThat(awaitItem())
                         .isEqualTo(
                             MessageVM(
                                 "<body><p><code>HelloWorld</code></p></body>",
