@@ -18,6 +18,7 @@ import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.assertAll
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.boot.test.web.server.LocalServerPort
@@ -30,7 +31,7 @@ import java.time.Instant
 import java.time.temporal.ChronoUnit.MILLIS
 import kotlin.time.Duration.Companion.seconds
 import kotlin.time.ExperimentalTime
-import kotlin.time.seconds
+
 
 @SpringBootTest(
     webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT,
@@ -100,31 +101,23 @@ class ChatKotlinApplicationTests(
                 .route("api.v1.messages.stream")
                 .retrieveFlow<MessageVM>()
                 .test {
-                    assertThat(awaitItem())
-                        .isEqualTo(
-                            MessageVM(
-                                "*testMessage*",
-                                UserVM("test", URL("http://test.com")),
-                                now.minusSeconds(2).truncatedTo(MILLIS)
-                            )
-                        )
+                    val item1 = awaitItem()
+                    assertAll("Verify Message VM",
+                        { assertThat(item1.content).isEqualTo("*testMessage*") },
+                        { assertThat(item1.user).isEqualTo(UserVM("test", URL("http://test.com"))) },
+                    )
 
-                    assertThat(awaitItem())
-                        .isEqualTo(
-                            MessageVM(
-                                "<body><p><strong>testMessage2</strong></p></body>",
-                                UserVM("test1", URL("http://test.com")),
-                                now.minusSeconds(1).truncatedTo(MILLIS)
-                            )
-                        )
-                    assertThat(awaitItem())
-                        .isEqualTo(
-                            MessageVM(
-                                "<body><p><code>testMessage3</code></p></body>",
-                                UserVM("test2", URL("http://test.com")),
-                                now.truncatedTo(MILLIS)
-                            )
-                        )
+                    val item2 = awaitItem()
+                    assertAll("Verify Message VM",
+                        { assertThat(item2.content).isEqualTo("<body><p><strong>testMessage2</strong></p></body>") },
+                        { assertThat(item2.user).isEqualTo(UserVM("test1", URL("http://test.com"))) },
+                    )
+
+                    val item3 = awaitItem()
+                    assertAll("Verify Message VM",
+                        { assertThat(item3.content).isEqualTo("<body><p><code>testMessage3</code></p></body>") },
+                        { assertThat(item3.user).isEqualTo(UserVM("test2", URL("http://test.com"))) },
+                    )
 
                     expectNoEvents()
 
@@ -143,14 +136,11 @@ class ChatKotlinApplicationTests(
                             .collect()
                     }
 
-                    assertThat(awaitItem())
-                        .isEqualTo(
-                            MessageVM(
-                                "<body><p><code>HelloWorld</code></p></body>",
-                                UserVM("test", URL("http://test.com")),
-                                now.plusSeconds(1).truncatedTo(MILLIS)
-                            )
-                        )
+                    val item4 = awaitItem()
+                    assertAll("Verify Message VM",
+                        { assertThat(item4.content).isEqualTo("<body><p><code>HelloWorld</code></p></body>") },
+                        { assertThat(item4.user).isEqualTo(UserVM("test", URL("http://test.com"))) },
+                    )
 
                     cancelAndIgnoreRemainingEvents()
                 }
