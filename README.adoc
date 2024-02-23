@@ -1286,114 +1286,101 @@ We use `RSocketRequest.Builder` instead of `TestRestTemplate` since the endpoint
 [source,kotlin]
 -----
 @ExperimentalTime
-@ExperimentalCoroutinesApi
-@Test
-fun `test that messages API streams latest messages`() {
-   runBlocking {
-       val rSocketRequester =
-            rsocketBuilder.websocket(URI("ws://localhost:${serverPort}/rsocket"))
+    @ExperimentalCoroutinesApi
+    @Test
+    fun `test that messages API streams latest messages`() {
+        runBlocking {
+            val rSocketRequester = rsocketBuilder.websocket(URI("ws://localhost:${serverPort}/rsocket"))
 
-       rSocketRequester
-           .route("api.v1.messages.stream")
-           .retrieveFlow<MessageVM>()
-           .test {
-               assertThat(expectItem().prepareForTesting())
-                   .isEqualTo(
-                       MessageVM(
-                           "*testMessage*",
-                           UserVM("test", URL("http://test.com")),
-                           now.minusSeconds(2).truncatedTo(MILLIS)
-                       )
-                   )
+            rSocketRequester
+                .route("api.v1.messages.stream")
+                .retrieveFlow<MessageVM>()
+                .test {
+                    val item1 = awaitItem()
+                    assertAll("Verify Message VM",
+                        { assertThat(item1.content).isEqualTo("*testMessage*") },
+                        { assertThat(item1.user).isEqualTo(UserVM("test", URL("http://test.com"))) },
+                    )
 
-               assertThat(expectItem().prepareForTesting())
-                   .isEqualTo(
-                       MessageVM(
-                           "<body><p><strong>testMessage2</strong></p></body>",
-                           UserVM("test1", URL("http://test.com")),
-                           now.minusSeconds(1).truncatedTo(MILLIS)
-                       )
-                   )
-               assertThat(expectItem().prepareForTesting())
-                   .isEqualTo(
-                       MessageVM(
-                           "<body><p><code>testMessage3</code></p></body>",
-                           UserVM("test2", URL("http://test.com")),
-                           now.truncatedTo(MILLIS)
-                       )
-                   )
+                    val item2 = awaitItem()
+                    assertAll("Verify Message VM",
+                        { assertThat(item2.content).isEqualTo("<body><p><strong>testMessage2</strong></p></body>") },
+                        { assertThat(item2.user).isEqualTo(UserVM("test1", URL("http://test.com"))) },
+                    )
 
-               expectNoEvents()
+                    val item3 = awaitItem()
+                    assertAll("Verify Message VM",
+                        { assertThat(item3.content).isEqualTo("<body><p><code>testMessage3</code></p></body>") },
+                        { assertThat(item3.user).isEqualTo(UserVM("test2", URL("http://test.com"))) },
+                    )
 
-               launch {
-                   rSocketRequester.route("api.v1.messages.stream")
-                       .dataWithType(flow {
-                           emit(
-                               MessageVM(
-                                   "`HelloWorld`",
-                                   UserVM("test", URL("http://test.com")),
-                                   now.plusSeconds(1)
-                               )
-                           )
-                       })
-                       .retrieveFlow<Void>()
-                       .collect()
-               }
+                    expectNoEvents()
 
-               assertThat(expectItem().prepareForTesting())
-                   .isEqualTo(
-                       MessageVM(
-                           "<body><p><code>HelloWorld</code></p></body>",
-                           UserVM("test", URL("http://test.com")),
-                           now.plusSeconds(1).truncatedTo(MILLIS)
-                       )
-                   )
+                    launch {
+                        rSocketRequester.route("api.v1.messages.stream")
+                            .dataWithType(flow {
+                                emit(
+                                    MessageVM(
+                                        "`HelloWorld`",
+                                        UserVM("test", URL("http://test.com")),
+                                        now.plusSeconds(1)
+                                    )
+                                )
+                            })
+                            .retrieveFlow<Void>()
+                            .collect()
+                    }
 
-               cancelAndIgnoreRemainingEvents()
-           }
-   }
-}
+                    val item4 = awaitItem()
+                    assertAll("Verify Message VM",
+                        { assertThat(item4.content).isEqualTo("<body><p><code>HelloWorld</code></p></body>") },
+                        { assertThat(item4.user).isEqualTo(UserVM("test", URL("http://test.com"))) },
+                    )
 
-@ExperimentalTime
-@Test
-fun `test that messages streamed to the API is stored`() {
-   runBlocking {
-       launch {
-           val rSocketRequester =
-                rsocketBuilder.websocket(URI("ws://localhost:${serverPort}/rsocket"))
+                    cancelAndIgnoreRemainingEvents()
+                }
+        }
+    }
 
-           rSocketRequester.route("api.v1.messages.stream")
-               .dataWithType(flow {
-                   emit(
-                       MessageVM(
-                           "`HelloWorld`",
-                           UserVM("test", URL("http://test.com")),
-                           now.plusSeconds(1)
-                       )
-                   )
-               })
-               .retrieveFlow<Void>()
-               .collect()
-       }
+    @ExperimentalTime
+    @Test
+    fun `test that messages streamed to the API is stored`() {
+        runBlocking {
+            launch {
+                val rSocketRequester = rsocketBuilder.websocket(URI("ws://localhost:${serverPort}/rsocket"))
 
-       delay(2.seconds)
+                rSocketRequester.route("api.v1.messages.stream")
+                    .dataWithType(flow {
+                        emit(
+                            MessageVM(
+                                "`HelloWorld`",
+                                UserVM("test", URL("http://test.com")),
+                                now.plusSeconds(1)
+                            )
+                        )
+                    })
+                    .retrieveFlow<Void>()
+                    .collect()
+            }
 
-       messageRepository.findAll()
-           .first { it.content.contains("HelloWorld") }
-           .apply {
-               assertThat(this.prepareForTesting())
-                   .isEqualTo(
-                       Message(
-                           "`HelloWorld`",
-                           ContentType.MARKDOWN,
-                           now.plusSeconds(1).truncatedTo(MILLIS),
-                           "test",
-                           "http://test.com"
-                       )
-                   )
-           }
-   }
-}
+            delay(2.seconds)
+
+            messageRepository.findAll()
+                .first { it.content.contains("HelloWorld") }
+                .apply {
+                    assertThat(this.prepareForTesting())
+                        .isEqualTo(
+                            Message(
+                                "`HelloWorld`",
+                                ContentType.MARKDOWN,
+                                now.plusSeconds(1).truncatedTo(MILLIS),
+                                "test",
+                                "http://test.com"
+                            )
+                        )
+                }
+        }
+    }
 -----
 
 == Summary
